@@ -1,0 +1,54 @@
+- name: Install required packages
+  apt:
+    name:
+      - curl
+      - tar
+    state: present
+    update_cache: yes
+
+- name: Create GitHub Runner directory
+  file:
+    path: "{{ runner_dir }}"
+    state: directory
+    mode: "0755"
+    owner: ubuntu
+    group: ubuntu
+
+- name: Download GitHub Runner
+  get_url:
+    url: "https://github.com/actions/runner/releases/download/v{{ runner_version }}/actions-runner-linux-x64-{{ runner_version }}.tar.gz"
+    dest: "{{ runner_dir }}/actions-runner.tar.gz"
+    owner: ubuntu
+    group: ubuntu
+
+- name: Extract GitHub Runner
+  unarchive:
+    src: "{{ runner_dir }}/actions-runner.tar.gz"
+    dest: "{{ runner_dir }}"
+    remote_src: yes
+    owner: ubuntu
+    group: ubuntu
+
+- name: Configure GitHub Runner
+  become: no
+  command: >
+    ./config.sh
+    --unattended
+    --url {{ github_repo_url }}
+    --token {{ runner_token }}
+    --labels {{ runner_labels }}
+    --replace
+  args:
+    chdir: "{{ runner_dir }}"
+
+- name: Install GitHub Runner service
+  become: yes
+  command: ./svc.sh install
+  args:
+    chdir: "{{ runner_dir }}"
+
+- name: Start GitHub Runner service
+  become: yes
+  command: ./svc.sh start
+  args:
+    chdir: "{{ runner_dir }}"

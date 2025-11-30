@@ -1,0 +1,5 @@
+- name: Setup GitHub self-hosted runner
+  hosts: ubuntu
+  become: yes
+  roles:
+    - github-runner

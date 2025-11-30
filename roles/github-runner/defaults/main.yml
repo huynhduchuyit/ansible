@@ -1,0 +1,3 @@
+runner_version: "2.329.0"
+runner_dir: "/home/ubuntu/actions-runner"
+runner_labels: "self-hosted,linux"

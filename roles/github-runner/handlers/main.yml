@@ -1,0 +1,4 @@
+- name: restart github runner
+  command: ./svc.sh restart
+  args:
+    chdir: "{{ runner_dir }}"
