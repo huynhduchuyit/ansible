@@ -1,5 +1,5 @@
-- name: Setup GitHub self-hosted runner
-  hosts: ubuntu
+- hosts: ubuntu
   become: yes
   roles:
+    - docker
     - github-runner

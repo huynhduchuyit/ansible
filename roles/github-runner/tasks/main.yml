@@ -1,5 +1,5 @@
 - name: Install required packages
-  apt:
+  ansible.builtin.apt:
     name:
       - curl
       - tar
@@ -7,7 +7,7 @@
     update_cache: yes
 
 - name: Create GitHub Runner directory
-  file:
+  ansible.builtin.file:
     path: "{{ runner_dir }}"
     state: directory
     mode: "0755"
@@ -15,14 +15,14 @@
     group: ubuntu
 
 - name: Download GitHub Runner
-  get_url:
+  ansible.builtin.get_url:
     url: "https://github.com/actions/runner/releases/download/v{{ runner_version }}/actions-runner-linux-x64-{{ runner_version }}.tar.gz"
     dest: "{{ runner_dir }}/actions-runner.tar.gz"
     owner: ubuntu
     group: ubuntu
 
 - name: Extract GitHub Runner
-  unarchive:
+  ansible.builtin.unarchive:
     src: "{{ runner_dir }}/actions-runner.tar.gz"
     dest: "{{ runner_dir }}"
     remote_src: yes
@@ -31,7 +31,7 @@
 
 - name: Configure GitHub Runner
   become: no
-  command: >
+  ansible.builtin.command: >
     ./config.sh
     --unattended
     --url {{ github_repo_url }}
@@ -43,12 +43,12 @@
 
 - name: Install GitHub Runner service
   become: yes
-  command: ./svc.sh install
+  ansible.builtin.command: ./svc.sh install
   args:
     chdir: "{{ runner_dir }}"
 
 - name: Start GitHub Runner service
   become: yes
-  command: ./svc.sh start
+  ansible.builtin.command: ./svc.sh start
   args:
     chdir: "{{ runner_dir }}"

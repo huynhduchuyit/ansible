@@ -1,0 +1,80 @@
+- name: Install required packages
+  become: true
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+      - python3-pip
+      - python3-setuptools
+      - python3-venv
+      - python3-jsondiff
+      - python3-docker
+    state: present
+    update_cache: true
+
+- name: Create keyrings directory
+  become: true
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+
+- name: Download Docker GPG key
+  become: true
+  ansible.builtin.get_url:
+    url: "{{ docker_gpg_key_url }}"
+    dest: "{{ docker_key_path }}"
+    mode: "0644"
+  register: docker_key
+
+- name: Add Docker apt repository
+  become: true
+  ansible.builtin.copy:
+    dest: "{{ docker_sources_list }}"
+    mode: "0644"
+    content: |
+      Types: deb
+      URIs: {{ docker_repo_url }}
+      Suites: {{ ansible_distribution_release }}
+      Components: stable
+      Signed-By: {{ docker_key_path }}
+  register: docker_repo
+
+- name: Update apt cache if Docker repo/key changed
+  become: true
+  ansible.builtin.apt:
+    update_cache: true
+  when: docker_key.changed or docker_repo.changed
+
+- name: Install Docker packages
+  become: true
+  ansible.builtin.apt:
+    name: "{{ docker_packages }}"
+    state: present
+
+- name: Add current user to Docker group
+  become: true
+  ansible.builtin.user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: true
+
+- name: Initialize Docker Swarm
+  become: true
+  community.docker.docker_swarm:
+    state: present
+
+- name: Download Portainer agent stack file
+  become: true
+  ansible.builtin.get_url:
+    url: "https://downloads.portainer.io/ce-lts/portainer-agent-stack.yml"
+    dest: "/opt/portainer-agent-stack.yml"
+    mode: "0644"
+
+- name: Deploy Portainer Stack
+  become: true
+  community.docker.docker_stack:
+    state: present
+    name: portainer
+    compose:
+      - /opt/portainer-agent-stack.yml
